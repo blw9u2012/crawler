@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # filename: crawler.py
-import pdb
+# import pdb
 import urllib2
 from HREFParser import HREFParser
 from urlparse import urlparse
