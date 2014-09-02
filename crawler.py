@@ -45,10 +45,11 @@ class Crawler(object):
         self.content = {}
         self.cache = cache
 
-    def crawl(self, url, no_cache=None):
+    def crawl(self, url, search_term=None, no_cache=None):
         """
         url: where we start crawling, should be a complete URL like
         'http://www.intel.com/news/'
+        search_term: the term the user is searching for should they opt to.
         no_cache: function returning True if the url should be refreshed
         """
         u_parse = urlparse(url)
@@ -56,6 +57,7 @@ class Crawler(object):
         self.content[self.domain] = {}
         self.scheme = u_parse.scheme
         self.no_cache = no_cache
+        self.search_term = search_term
         self._crawl([u_parse.path], self.depth)
 
     def set(self, url, html):
@@ -88,7 +90,12 @@ class Crawler(object):
                 # do not crawl twice the same page
                 if url not in self.content:
                     html = self.get(url)
-                    self.set(url, html)
+                    if self.search_term is None:
+                        self.set(url, html)
+                        continue
+                    else:
+                        if self.search_term in html:
+                            self.set(url, html)
                     n_urls = n_urls.union(get_local_links(html, self.domain))
             self._crawl(n_urls, max_depth - 1)
 

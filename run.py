@@ -18,17 +18,16 @@ feed_queue = Queue(maxsize=0)
 # Define a function that each thread will run when start() is called
 
 
-def worker_crawl(q):
+def worker_crawl(q, search):
+    # pdb.set_trace()
     while not q.empty():
         site = q.get()
         print "Getting ready to crawl: " + site
         # crawler = Crawler(CrawlerCache(site[11:-4] + '.db'))
         crawler = Crawler(CrawlerCache('crawler.db'))
         print "Successfully created crawler for site: " + site + " with object: " + str(crawler)
-
-        # Crawl the site
         root_re = re.compile('^/$').match
-        crawler.crawl(site, root_re)
+        crawler.crawl(site, search_term=search, no_cache=root_re)
         print "Finished crawling site: ", site
         q.task_done()
 
@@ -44,7 +43,6 @@ def worker_search(site):
                 print row
 
 if __name__ == "__main__":
-    root_re = re.compile('^/$').match
     # Adding the sites manually to the queue is done for the sake of
     # simplicity. The queue is a FIFO queue.
     sites = []
@@ -58,10 +56,25 @@ if __name__ == "__main__":
         else:
             feed_queue.put(site)
             sites.append(site)
+
+    # Search
+    custom_search = False
+    search = ""
+    response = raw_input("Would you like to search for something? (y/n): ")
+    # pdb.set_trace()
+    if 'y' in response.lower():
+        custom_search = True
+        search = raw_input("What would like to search for? ")
+    else:
+        print "Not searching for anything."
+
     # Create the worker threads, feed them the worker function and the queue
     start = time.clock()
     for x in range(len(sites)):
-        worker = threading.Thread(target=worker_crawl, args=(feed_queue,))
+        if custom_search:
+            worker = threading.Thread(target=worker_crawl, args=(feed_queue, search))
+        else:
+            worker = threading.Thread(target=worker_crawl, args=(feed_queue))
         worker.setDaemon = True
         worker.start()
     feed_queue.join()
