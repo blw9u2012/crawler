@@ -41,16 +41,19 @@ def worker_search(site):
         for row in cursor:
             soup = BeautifulSoup(row[2])
             if site == 'slickdeals':
-                print soup.findAll('div', attrs={"class": "dealblocktext"})
+                with open(site+".txt", 'w+') as f:
+                    f.write(soup.findAll('div', attrs={"class": "dealblocktext"}))
             if site == 'woot':
-                print soup.findAll('div', attrs={"class": "info"})
+                with open(site+".txt", 'w+') as f:
+                    f.write(soup.findAll('div', attrs={"class": "info"}))
             if site == 'cowboom':
-                print soup.findAll('div', attrs={"class": "product-block"})
+                with open(site+".txt", 'w+') as f:
+                    f.write(soup.findAll('div', attrs={"class": "product-block"}))
 
 
 if __name__ == "__main__":
     # Adding the sites manually to the queue is done for the sake of
-    # simplicity. The queue is a FIFO queue.
+    # simplicity. The queue is a FIFO queue by default.
     sites = []
     get_sites = True
     print "Please enter sites one at a time. When finished enter 'done'"
