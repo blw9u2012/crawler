@@ -18,7 +18,7 @@ feed_queue = Queue(maxsize=0)
 # Define a function that each thread will run when start() is called
 
 
-def worker_crawl(q, search):
+def worker_crawl(q):
     # pdb.set_trace()
     while not q.empty():
         site = q.get()
@@ -39,8 +39,14 @@ def worker_search(site):
         cursor.execute(
             "SELECT * FROM sites WHERE domain LIKE ?", ('%{}%'.format(site), ))
         for row in cursor:
-            if 'xbox' in row[1] or 'ps4' in row[1]:
-                print row
+            soup = BeautifulSoup(row[2])
+            if site == 'slickdeals':
+                print soup.findAll('div', attrs={"class": "dealblocktext"})
+            if site == 'woot':
+                print soup.findAll('div', attrs={"class": "info"})
+            if site == 'cowboom':
+                print soup.findAll('div', attrs={"class": "product-block"})
+
 
 if __name__ == "__main__":
     # Adding the sites manually to the queue is done for the sake of
@@ -72,9 +78,9 @@ if __name__ == "__main__":
     start = time.clock()
     for x in range(len(sites)):
         if custom_search:
-            worker = threading.Thread(target=worker_crawl, args=(feed_queue, search))
+            worker = threading.Thread(target=worker_crawl, args=(feed_queue,))
         else:
-            worker = threading.Thread(target=worker_crawl, args=(feed_queue))
+            worker = threading.Thread(target=worker_crawl, args=(feed_queue,))
         worker.setDaemon = True
         worker.start()
     feed_queue.join()
@@ -85,6 +91,8 @@ if __name__ == "__main__":
     print "Starting to search through sites."
     # pdb.set_trace()
     for x in range(len(sites)):
+
+        num_threads = threading.active_count()
         if threading.active_count() < max_num_searcher_threads:
             worker = threading.Thread(
                 target=worker_search, args=(sites[x][11:-4],))

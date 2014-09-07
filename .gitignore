@@ -6,3 +6,7 @@
 # Created DB #
 ##############
 *.db
+
+# PyCharm Idea Files #
+######################
+.idea/*

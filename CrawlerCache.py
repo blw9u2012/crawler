@@ -1,4 +1,5 @@
 import sqlite3
+import threading
 
 
 class CrawlerCache(object):
@@ -19,9 +20,13 @@ class CrawlerCache(object):
         """
         store the content for a given domain and relative url
         """
-        self.cursor.execute("INSERT INTO sites VALUES (?,?,?)",
-                            (domain, url, data))
-        self.conn.commit()
+        lock = threading.Lock()
+        lock.acquire()
+        try:
+            self.cursor.execute("INSERT INTO sites VALUES (?,?,?)", (domain, url, data))
+            self.conn.commit()
+        finally:
+            lock.release()
 
     def get(self, domain, url):
         """

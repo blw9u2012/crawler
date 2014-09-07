@@ -13,7 +13,6 @@ def get_local_links(html, domain):
     """
 
     # Initialize a set of links
-    # pdb.set_trace()
     href_links = set()
     parser = HREFParser()
     parser.feed(html)
@@ -72,7 +71,7 @@ class Crawler(object):
         if page is None:
             try:
                 page = self.curl(url)
-            except Exception, e:
+            except Exception:
                 print "Didn't cache ", url
                 page = "No content :("
         else:
