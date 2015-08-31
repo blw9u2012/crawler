@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # filename: crawler.py
-# import pdb
+import pdb
 import urllib2
 from HREFParser import HREFParser
 from urlparse import urlparse
@@ -35,7 +35,7 @@ def get_local_links(html, domain):
 
 class Crawler(object):
 
-    def __init__(self, cache=None, depth=2):
+    def __init__(self, cache=None, depth=3):
         """
         depth: how many time it will bounce from page one (optional)
         cache: a basic cache controller (optional)
@@ -56,7 +56,7 @@ class Crawler(object):
         self.content[self.domain] = {}
         self.scheme = u_parse.scheme
         self.no_cache = no_cache
-        self.search_term = search_term
+        # self.search_term = search_term
         self._crawl([u_parse.path], self.depth)
 
     def set(self, url, html):
@@ -65,15 +65,12 @@ class Crawler(object):
             self.cache.set(self.domain, url, html)
 
     def get(self, url):
+        # pdb.set_trace()
         page = None
         if self.is_cacheable(url):
             page = self.cache.get(self.domain, url)
         if page is None:
-            try:
-                page = self.curl(url)
-            except Exception:
-                print "Didn't cache ", url
-                page = "No content :("
+            page = self.curl(url)
         else:
             print "cached url... [%s] %s" % (self.domain, url)
         return page
@@ -83,18 +80,14 @@ class Crawler(object):
             and not self.no_cache(url)
 
     def _crawl(self, urls, max_depth):
+        # pdb.set_trace()
         n_urls = set()
         if max_depth:
             for url in urls:
                 # do not crawl twice the same page
                 if url not in self.content:
                     html = self.get(url)
-                    if self.search_term is None:
-                        self.set(url, html)
-                        continue
-                    else:
-                        if self.search_term in html:
-                            self.set(url, html)
+                    self.set(url, html)
                     n_urls = n_urls.union(get_local_links(html, self.domain))
             self._crawl(n_urls, max_depth - 1)
 

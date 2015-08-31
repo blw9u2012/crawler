@@ -5,6 +5,7 @@ import time
 import sqlite3
 import threading
 import pdb
+import requests
 from Queue import Queue
 from crawler import Crawler
 from CrawlerCache import CrawlerCache
@@ -51,6 +52,17 @@ def worker_search(site):
                     f.write(soup.findAll('div', attrs={"class": "product-block"}))
 
 
+def check_site(site):
+    try:
+        response = requests.get(site)
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.exceptions.MissingSchema:
+        print "Missing schema for site. Did you mean http://{}".format(site)
+
+
 if __name__ == "__main__":
     # Adding the sites manually to the queue is done for the sake of
     # simplicity. The queue is a FIFO queue by default.
@@ -63,8 +75,13 @@ if __name__ == "__main__":
             get_sites = False
             print "Finished entering sites"
         else:
-            feed_queue.put(site)
-            sites.append(site)
+            # Check to see if site is valid here...
+            if check_site(site):
+                feed_queue.put(site)
+                sites.append(site)
+            else:
+                "Please enter a valid url"
+                continue
 
     # Search
     custom_search = False
