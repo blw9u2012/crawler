@@ -19,37 +19,17 @@ feed_queue = Queue(maxsize=0)
 # Define a function that each thread will run when start() is called
 
 
-def worker_crawl(q):
+def worker_crawl(q, search):
     # pdb.set_trace()
     while not q.empty():
         site = q.get()
         print "Getting ready to crawl: " + site
-        # crawler = Crawler(CrawlerCache(site[11:-4] + '.db'))
-        crawler = Crawler(CrawlerCache('crawler.db'))
+        crawler = Crawler(CrawlerCache('crawler.db'), search_term=search)
         print "Successfully created crawler for site: " + site + " with object: " + str(crawler)
         root_re = re.compile('^/$').match
-        crawler.crawl(site, search_term=search, no_cache=root_re)
+        crawler.crawl(site, no_cache=root_re)
         print "Finished crawling site: ", site
         q.task_done()
-
-
-def worker_search(site):
-    # pdb.set_trace()
-    with sqlite3.connect('crawler.db') as connection:
-        cursor = connection.cursor()
-        cursor.execute(
-            "SELECT * FROM sites WHERE domain LIKE ?", ('%{}%'.format(site), ))
-        for row in cursor:
-            soup = BeautifulSoup(row[2])
-            if site == 'slickdeals':
-                with open(site+".txt", 'w+') as f:
-                    f.write(soup.findAll('div', attrs={"class": "dealblocktext"}))
-            if site == 'woot':
-                with open(site+".txt", 'w+') as f:
-                    f.write(soup.findAll('div', attrs={"class": "info"}))
-            if site == 'cowboom':
-                with open(site+".txt", 'w+') as f:
-                    f.write(soup.findAll('div', attrs={"class": "product-block"}))
 
 
 def check_site(site):
@@ -98,25 +78,12 @@ if __name__ == "__main__":
     start = time.clock()
     for x in range(len(sites)):
         if custom_search:
-            worker = threading.Thread(target=worker_crawl, args=(feed_queue,))
+            worker = threading.Thread(target=worker_crawl, args=(feed_queue,search,))
         else:
-            worker = threading.Thread(target=worker_crawl, args=(feed_queue,))
+            worker = threading.Thread(target=worker_crawl, args=(feed_queue,search,))
         worker.setDaemon = True
         worker.start()
     feed_queue.join()
     end = time.clock() - start
     print "Time it took to finish: {0} seconds".format(end)
     print "All threads have finished. Finished crawling sites."
-
-    print "Starting to search through sites."
-    # pdb.set_trace()
-    for x in range(len(sites)):
-
-        num_threads = threading.active_count()
-        if threading.active_count() < max_num_searcher_threads:
-            worker = threading.Thread(
-                target=worker_search, args=(sites[x][11:-4],))
-            worker.setDaemon = True
-            worker.start()
-        else:
-            print "Reached max number of threads. Be patient"

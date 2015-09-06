@@ -9,6 +9,7 @@ class CrawlerCache(object):
     """
 
     def __init__(self, db_file):
+        self.lock = threading.Lock()
         self.conn = sqlite3.connect(db_file)
         c = self.conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS sites
@@ -20,13 +21,12 @@ class CrawlerCache(object):
         """
         store the content for a given domain and relative url
         """
-        lock = threading.Lock()
-        lock.acquire()
+        self.lock.acquire()
         try:
             self.cursor.execute("INSERT INTO sites VALUES (?,?,?)", (domain, url, data))
             self.conn.commit()
         finally:
-            lock.release()
+            self.lock.release()
 
     def get(self, domain, url):
         """
